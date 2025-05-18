@@ -47,7 +47,7 @@ public:
         return _grid.at(row).at(col);
     }
 
-    bool setCellState(int row, int col, Mark mark) {
+    bool setCellState(const int row, const int col, const Mark mark) {
         if (getCellState(row, col).has_value()) {
             throw std::logic_error("Cell is already occupied");
         }
@@ -130,9 +130,9 @@ public:
     }
 };
 
-class MachinePlayer : public Player {
+class MachinePlayerRandom : public Player {
 public:
-    explicit MachinePlayer(Mark mark) : Player(mark) { }
+    explicit MachinePlayerRandom(Mark mark) : Player(mark) { }
 
     virtual std::pair<int, int> makeMove(const Board& board) override {
         int n = board.size();
@@ -143,6 +143,56 @@ public:
         } while (board.getCellState(row, col).has_value());
         std::cout << "Machine player " << getMark() << " moves to: " << row << " " << col << std::endl;
         return {row, col};
+    }
+};
+
+class MachinePlayerRecursive : public Player {
+public:
+    explicit MachinePlayerRecursive(Mark mark) : Player(mark) { }
+
+    virtual std::pair<int, int> makeMove(const Board& board) override {
+        int max = std::numeric_limits<int>::min(), maxRow = 0, maxCol = 0;
+        for (int i=0; i<board.size(); i++) {
+            for (int j=0; j<board.size(); j++) {
+                if (!board.getCellState(i, j).has_value()) {
+                    int w = calcWins(i, j, getMark(), board);
+                    if (w > max) {
+                        max = w;
+                        maxRow = i;
+                        maxCol = j;
+                    }
+                    std::cout << w << " ";
+                }
+                else {
+                    std::cout << (board.getCellState(i, j) == Mark::X ? "X" : "O")  << " ";
+                }
+            }
+            std::cout << std::endl;
+        }
+        if (max == std::numeric_limits<int>::min()) {
+            throw std::logic_error("This function woundn't be called if all cells are occupied.");
+        }
+        return { maxRow, maxCol };
+    }
+
+protected:
+    int calcWins(const int row, const int col, const Mark mark, Board board) const {
+        if (!board.emptyCellExists()) {
+            return 0;
+        }
+        if (board.setCellState(row, col, mark)) {
+            return 1;
+        }
+        int res = 0;
+        Mark other_mark = mark == Mark::X ? Mark::O : Mark::X;
+        for (int i=0; i<board.size(); i++) {
+            for (int j=0; j<board.size(); j++) {
+                if (!board.getCellState(i, j).has_value()) {
+                    res += other_mark == getMark() ? 0 : calcWins(i, j, other_mark, board);
+                }
+            }
+        }
+        return res;
     }
 };
 
@@ -169,6 +219,7 @@ public:
                 return NULL;
             }
             auto move = currentPlayer->makeMove(_board);
+            std::cout << "Player " << currentPlayer->getMark() << " move: " << move.first << ", " << move.second << std::endl;
             if (_board.setCellState(move.first, move.second, currentPlayer->getMark())) {
                 return currentPlayer;
             }
@@ -185,7 +236,7 @@ private:
 int main() {
     std::cout << "This is a Tic Tac Toe game." << std::endl;
     HumanPlayer player1(Mark::X);
-    MachinePlayer player2(Mark::O);
+    MachinePlayerRecursive player2(Mark::O);
     Board board;
     Game game(player1, player2, board);
     Player* winner = game.play();

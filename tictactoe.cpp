@@ -23,6 +23,10 @@ class Board {
 public:
     explicit Board(const int n = 3) : _grid(n, std::vector<MarkOptional>(n)) {}
 
+    int size() const {
+        return _grid.size();
+    }
+
     void display() const {
         for (const auto& row : _grid) {
             for (const auto& cell : row) {
@@ -64,7 +68,7 @@ public:
 protected:
     bool checkCompletedLine(const int row, const int col, Mark mark) const {
         int vcnt = 0, hcnt = 0, d1cnt = 0, d2cnt = 0;
-        for (int i=0; i<_grid.size(); i++) {
+        for (int i=0; i<size(); i++) {
             if (_grid[i][col] == mark)
                 vcnt++;
             if (_grid[row][i] == mark)
@@ -74,7 +78,7 @@ protected:
             if (_grid[i][_grid.size() - i - 1] == mark)
                 d2cnt++;
         }
-        return vcnt == _grid.size() || hcnt == _grid.size() || d1cnt == _grid.size() || d2cnt == _grid.size();
+        return vcnt == size() || hcnt == size() || d1cnt == size() || d2cnt == size();
     }
 
 private:
@@ -92,7 +96,7 @@ public:
 
     virtual std::pair<int, int> makeMove(const Board& board) = 0;
 
-protected:
+private:
     Mark _mark;
 };
 
@@ -103,7 +107,7 @@ public:
     std::pair<int, int> makeMove(const Board& board) override {
         int row, col;
         while (true) {
-            std::cout << "Player " << _mark << ", enter your move (row and column): ";
+            std::cout << "Player " << getMark() << ", enter your move (row and column): ";
             std::cin >> row >> col;
             if (!std::cin) {
                 std::cin.clear();
@@ -122,6 +126,22 @@ public:
                 std::cout.flush();
             }
         }
+        return {row, col};
+    }
+};
+
+class MachinePlayer : public Player {
+public:
+    explicit MachinePlayer(Mark mark) : Player(mark) { }
+
+    virtual std::pair<int, int> makeMove(const Board& board) override {
+        int n = board.size();
+        int row, col;
+        do {
+            row = rand() % n;
+            col = rand() % n;
+        } while (board.getCellState(row, col).has_value());
+        std::cout << "Machine player " << getMark() << " moves to: " << row << " " << col << std::endl;
         return {row, col};
     }
 };
@@ -165,7 +185,7 @@ private:
 int main() {
     std::cout << "This is a Tic Tac Toe game." << std::endl;
     HumanPlayer player1(Mark::X);
-    HumanPlayer player2(Mark::O);
+    MachinePlayer player2(Mark::O);
     Board board;
     Game game(player1, player2, board);
     Player* winner = game.play();

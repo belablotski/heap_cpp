@@ -6,7 +6,7 @@
 			"label": "build active file",
 			"command": "/usr/bin/g++",
 			"args": [
-				"-g",
+                "-g",
 				"${file}",
 				"-o",
 			    "${fileDirname}/${fileBasenameNoExtension}"

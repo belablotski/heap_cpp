@@ -7,7 +7,7 @@
 
 std::ostream& operator<<(std::ostream& o, std::map<char, int> counter) {
     for (auto kv : counter) {
-        std::cout << kv.first << "\t" << kv.second << std::endl;
+        o << kv.first << "\t" << kv.second << std::endl;
     }
     return o;
 }
